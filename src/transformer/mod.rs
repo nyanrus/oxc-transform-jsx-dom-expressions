@@ -13,7 +13,7 @@ pub use optimization::{OptimizationPass, OptimizationResult};
 
 // Main transformer implementation
 use crate::SolidTransformOptions;
-use oxc_ast::ast::{Program, Statement, Expression, JSXElement, JSXElementName};
+use oxc_ast::ast::{Program, Statement, Expression, JSXElement, JSXElementName, Argument};
 use oxc_allocator::Allocator;
 
 pub struct SolidTransform<'a> {
@@ -39,12 +39,31 @@ impl<'a> SolidTransform<'a> {
     fn visit_program(&mut self, program: &mut Program) {
         let mut jsx_transformer = JSXTransformer::new(self.allocator);
         
+        // First pass: collect JSX transformations
         for stmt in &mut program.body {
             self.visit_statement(stmt, &mut jsx_transformer);
         }
         
         // Add template declarations at the top of the program
         self.add_template_declarations(program, &jsx_transformer);
+    }
+
+    /// Transform all templates and return template declarations as strings
+    pub fn get_template_declarations(&mut self, program: &mut Program) -> Vec<String> {
+        let mut jsx_transformer = JSXTransformer::new(self.allocator);
+        let mut declarations = Vec::new();
+        
+        // Visit program to generate templates
+        for stmt in &mut program.body {
+            self.visit_statement(stmt, &mut jsx_transformer);
+        }
+        
+        // Generate template declarations
+        for (template_name, template_html) in jsx_transformer.get_templates() {
+            declarations.push(jsx_transformer.create_template_declaration(template_name, template_html));
+        }
+        
+        declarations
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement, jsx_transformer: &mut JSXTransformer) {
@@ -70,13 +89,15 @@ impl<'a> SolidTransform<'a> {
     fn visit_expression(&mut self, expr: &mut Expression, jsx_transformer: &mut JSXTransformer) {
         match expr {
             Expression::JSXElement(jsx_element) => {
-                // Transform JSX element and extract template info
-                match jsx_transformer.transform_jsx_element(jsx_element) {
+                // Transform JSX element to template (AST replacement pending)
+                match jsx_transformer.transform_jsx_to_call(jsx_element) {
                     Ok(template_call) => {
-                        // Mark that transformation occurred
                         self.template_counter += 1;
-                        // In a complete implementation, we would replace the expression
-                        println!("Transformed JSX element to: {}", template_call);
+                        println!("Generated template call: {}", template_call);
+                        
+                        // TODO: Replace the JSX element with actual CallExpression AST node
+                        // For now, we just log the transformation
+                        // *expr = call_expr; // This will be implemented when AST building works
                     }
                     Err(e) => {
                         eprintln!("Failed to transform JSX element: {:?}", e);
@@ -84,12 +105,31 @@ impl<'a> SolidTransform<'a> {
                 }
             }
             Expression::JSXFragment(_) => {
-                // Handle JSX fragments
+                // Handle JSX fragments - for now, just log that we encountered one
+                // Fragment handling will be implemented in a future phase
                 self.template_counter += 1;
-                println!("Transformed JSX fragment");
+                println!("Encountered JSX fragment (not yet transformed)");
             }
             _ => {
                 // Handle other expression types
+                // For nested expressions, we need to recurse
+                match expr {
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        // Arrow functions have a FunctionBody, not an optional Expression
+                        for stmt in &mut arrow.body.statements {
+                            self.visit_statement(stmt, jsx_transformer);
+                        }
+                    }
+                    Expression::CallExpression(call) => {
+                        for arg in &mut call.arguments {
+                            // Handle arguments that might contain expressions
+                            if let Some(expr) = arg.as_expression_mut() {
+                                self.visit_expression(expr, jsx_transformer);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
     }

@@ -74,6 +74,12 @@ impl SolidJsTransformer {
         let mut solid_transform = SolidTransform::new(&self.options, allocator);
         solid_transform.transform_program(program);
     }
+
+    /// Get template declarations from JSX transformations
+    pub fn get_template_declarations_with_allocator(&mut self, program: &mut Program, allocator: &Allocator) -> Vec<String> {
+        let mut solid_transform = SolidTransform::new(&self.options, allocator);
+        solid_transform.get_template_declarations(program)
+    }
 }
 
 impl Default for SolidJsTransformer {

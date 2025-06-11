@@ -1,16 +1,9 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 use oxc_transform_solid::{SolidJsTransformer, SolidTransformOptions};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
-fn parse_jsx_code(code: &str) -> oxc_ast::ast::Program {
-    let allocator = Allocator::default();
-    let source_type = SourceType::default().with_typescript(false).with_jsx(true);
-    
-    let mut parser = Parser::new(&allocator, code, source_type);
-    parser.parse().program
-}
 
 fn benchmark_simple_jsx(c: &mut Criterion) {
     let jsx_code = r#"
@@ -21,9 +14,13 @@ fn benchmark_simple_jsx(c: &mut Criterion) {
 
     c.bench_function("transform_simple_jsx", |b| {
         b.iter(|| {
-            let mut program = black_box(parse_jsx_code(jsx_code));
+            let allocator = Allocator::default();
+            let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+            
+            let parser = Parser::new(&allocator, jsx_code, source_type);
+            let mut program = black_box(parser.parse().program);
             let mut transformer = SolidJsTransformer::new();
-            transformer.transform_program(&mut program);
+            transformer.transform_program_with_allocator(&mut program, &allocator);
         })
     });
 }
@@ -51,9 +48,13 @@ fn benchmark_complex_jsx(c: &mut Criterion) {
 
     c.bench_function("transform_complex_jsx", |b| {
         b.iter(|| {
-            let mut program = black_box(parse_jsx_code(jsx_code));
+            let allocator = Allocator::default();
+            let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+            
+            let parser = Parser::new(&allocator, jsx_code, source_type);
+            let mut program = black_box(parser.parse().program);
             let mut transformer = SolidJsTransformer::new();
-            transformer.transform_program(&mut program);
+            transformer.transform_program_with_allocator(&mut program, &allocator);
         })
     });
 }
@@ -90,9 +91,13 @@ fn benchmark_nested_components(c: &mut Criterion) {
 
     c.bench_function("transform_nested_components", |b| {
         b.iter(|| {
-            let mut program = black_box(parse_jsx_code(jsx_code));
+            let allocator = Allocator::default();
+            let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+            
+            let parser = Parser::new(&allocator, jsx_code, source_type);
+            let mut program = black_box(parser.parse().program);
             let mut transformer = SolidJsTransformer::new();
-            transformer.transform_program(&mut program);
+            transformer.transform_program_with_allocator(&mut program, &allocator);
         })
     });
 }
@@ -122,9 +127,13 @@ fn benchmark_with_optimizations(c: &mut Criterion) {
 
     c.bench_function("transform_with_optimizations", |b| {
         b.iter(|| {
-            let mut program = black_box(parse_jsx_code(jsx_code));
+            let allocator = Allocator::default();
+            let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+            
+            let parser = Parser::new(&allocator, jsx_code, source_type);
+            let mut program = black_box(parser.parse().program);
             let mut transformer = SolidJsTransformer::with_options(options.clone());
-            transformer.transform_program(&mut program);
+            transformer.transform_program_with_allocator(&mut program, &allocator);
         })
     });
 }
@@ -138,7 +147,11 @@ fn benchmark_parser_only(c: &mut Criterion) {
 
     c.bench_function("parse_jsx_only", |b| {
         b.iter(|| {
-            black_box(parse_jsx_code(jsx_code));
+            let allocator = Allocator::default();
+            let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+            
+            let parser = Parser::new(&allocator, jsx_code, source_type);
+            black_box(parser.parse().program);
         })
     });
 }

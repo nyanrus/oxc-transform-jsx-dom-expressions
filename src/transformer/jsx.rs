@@ -6,9 +6,18 @@
 /// - Attribute and property transformations
 
 use oxc_ast::ast::{JSXElement, JSXChild, JSXAttribute, Expression, Statement, CallExpression, Argument};
+use oxc_ast::AstBuilder;
+use oxc_ast::NONE;
 use oxc_allocator::Allocator;
 use oxc_span::Span;
 use std::collections::HashMap;
+
+// Add new imports for AST node creation
+use oxc_ast::ast::{
+    IdentifierReference, BindingIdentifier
+};
+use oxc_ast::ast::Atom;
+use std::cell::Cell;
 
 pub struct JSXTransformer<'a> {
     /// Counter for generating unique template names
@@ -40,6 +49,44 @@ impl<'a> JSXTransformer<'a> {
         self.templates.insert(template_name.clone(), template_html);
         
         // Return template call as string for now
+        Ok(format!("{}()", template_name))
+    }
+
+    /// Create AST node for template declaration
+    /// const _tmpl$1 = /*#__PURE__*/template(`<div>Hello World</div>`);
+    pub fn create_template_declaration(&self, template_name: &str, template_html: &str) -> String {
+        format!(
+            "const {} = /*#__PURE__*/template(`{}`);",
+            template_name, template_html
+        )
+    }
+
+    /// Create a CallExpression AST node for template call: _tmpl$1()
+    /// Temporarily disabled due to complex OXC API issues - will be implemented in next phase
+    pub fn create_template_call(&self, template_name: &str) -> Expression<'a> {
+        // TODO: Implement proper AST node creation
+        // For now, this is a placeholder that should be replaced with proper AST building
+        // The actual transformation is happening in visit_expression in mod.rs
+        // where JSXElement is replaced with a CallExpression
+        
+        // Return a placeholder - this will be replaced with proper implementation
+        todo!("CallExpression creation needs proper AST builder integration")
+    }
+
+    /// Transform JSX element to template call expression (replaces the JSX in AST)
+    /// Currently generates templates but AST replacement is pending proper OXC integration
+    pub fn transform_jsx_to_call(&mut self, element: &JSXElement) -> Result<String, TransformError> {
+        // Extract static template structure
+        let template_html = self.extract_template(element);
+        
+        // Generate unique template name
+        let template_name = self.get_next_template_name();
+        
+        // Store template for later code generation
+        self.templates.insert(template_name.clone(), template_html);
+        
+        // For now, return template call as string representation
+        // Later this will return Expression<'a> when AST building is properly implemented
         Ok(format!("{}()", template_name))
     }
 
@@ -139,9 +186,32 @@ impl<'a> JSXTransformer<'a> {
         format!("_tmpl${}", self.template_counter)
     }
 
+    /// Get current template name (the last one generated)
+    pub fn get_current_template_name(&self) -> String {
+        format!("_tmpl${}", self.template_counter)
+    }
+
     /// Get generated templates
     pub fn get_templates(&self) -> &HashMap<String, String> {
         &self.templates
+    }
+
+    /// Replace JSXElement with CallExpression in the AST
+    /// This method is temporarily disabled due to AST complexity
+    pub fn replace_jsx_element_with_call(
+        &self,
+        _element: &JSXElement,
+        _callee: &str,
+    ) {
+        // TODO: Implement proper AST replacement when OXC API issues are resolved
+        todo!("AST replacement needs proper implementation")
+    }
+
+    /// Convert JSXAttribute to Argument for CallExpression
+    /// This method is temporarily disabled due to AST complexity
+    fn attribute_to_argument(&self, _attr: &JSXAttribute) {
+        // TODO: Implement proper argument conversion when OXC API issues are resolved
+        todo!("Argument creation needs proper implementation")
     }
 }
 
