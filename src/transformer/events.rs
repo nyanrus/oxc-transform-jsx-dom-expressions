@@ -1,11 +1,10 @@
-/// Event handling transformation for Solid.js
-/// 
+/// Event handling transformation for dom-expressions
+///
 /// This module handles the transformation of event handlers:
 /// - onClick={handler} -> delegated events
 /// - onMount, onCleanup lifecycle events
 /// - Custom event transformations
-
-use oxc_ast::ast::{JSXAttribute, Expression};
+use oxc_ast::ast::{Expression, JSXAttribute};
 
 pub struct EventTransformer;
 
@@ -28,16 +27,17 @@ impl EventTransformer {
     }
 
     /// Transform event handler attributes
-    pub fn transform_event_handler(&self, attribute: &JSXAttribute) -> Result<EventHandling, EventError> {
+    pub fn transform_event_handler(
+        &self,
+        attribute: &JSXAttribute,
+    ) -> Result<EventHandling, EventError> {
         let attr_name = self.get_attribute_name(attribute)?;
-        
+
         if !Self::is_event_attribute(&attr_name) {
             return Err(EventError::NotAnEvent(attr_name));
-        }
+        }        let event_name = self.extract_event_name(&attr_name)?;
+        let _handler_expr = self.extract_handler_expression(attribute)?;
 
-        let event_name = self.extract_event_name(&attr_name)?;
-        let handler_expr = self.extract_handler_expression(attribute)?;
-        
         // Convert Expression to String representation for now
         // TODO: Implement proper expression to string conversion
         let handler = format!("/* handler expression */");
@@ -56,8 +56,11 @@ impl EventTransformer {
     }
 
     /// Transform lifecycle events (onMount, onCleanup)
-    pub fn transform_lifecycle_event(&self, _attribute: &JSXAttribute) -> Result<LifecycleEvent, EventError> {
-        // TODO: Handle Solid.js lifecycle events
+    pub fn transform_lifecycle_event(
+        &self,
+        _attribute: &JSXAttribute,
+    ) -> Result<LifecycleEvent, EventError> {
+        // TODO: Handle dom-expressions lifecycle events
         // onMount={callback} -> createEffect(callback)
         // onCleanup={callback} -> onCleanup(callback)
         Err(EventError::NotImplemented("Lifecycle events"))
@@ -81,20 +84,31 @@ impl EventTransformer {
     }
 
     /// Extract handler expression from JSX attribute
-    fn extract_handler_expression(&self, _attribute: &JSXAttribute) -> Result<Expression, EventError> {
+    fn extract_handler_expression(
+        &self,
+        _attribute: &JSXAttribute,
+    ) -> Result<Expression, EventError> {
         // TODO: Extract the expression from JSXAttribute value
         todo!("Extract handler expression")
     }
 
     /// Generate delegated event binding code
-    pub fn generate_delegated_binding(&self, event_name: &str, _handler: &Expression) -> Result<String, EventError> {
+    pub fn generate_delegated_binding(
+        &self,
+        event_name: &str,
+        _handler: &Expression,
+    ) -> Result<String, EventError> {
         // TODO: Generate code for delegated event handling
         // This will be used in template generation
         Ok(format!("/* delegated {} */", event_name))
     }
 
     /// Generate direct event binding code  
-    pub fn generate_direct_binding(&self, event_name: &str, _handler: &Expression) -> Result<String, EventError> {
+    pub fn generate_direct_binding(
+        &self,
+        event_name: &str,
+        _handler: &Expression,
+    ) -> Result<String, EventError> {
         // TODO: Generate code for direct event handling
         Ok(format!("addEventListener('{}', {})", event_name, "handler"))
     }
@@ -108,7 +122,7 @@ impl Default for EventTransformer {
 
 #[derive(Debug)]
 pub enum EventHandling {
-    /// Events that use Solid's delegation system
+    /// Events that use dom-expressions's delegation system
     Delegated {
         event_name: String,
         handler: String, // Use String instead of Expression for now
@@ -122,7 +136,7 @@ pub enum EventHandling {
 
 #[derive(Debug)]
 pub enum LifecycleEvent {
-    Mount(String), // Use String instead of Expression for now
+    Mount(String),   // Use String instead of Expression for now
     Cleanup(String), // Use String instead of Expression for now
 }
 
@@ -162,9 +176,15 @@ mod tests {
     fn test_event_name_extraction() {
         let transformer = EventTransformer::new();
         assert_eq!(transformer.extract_event_name("onClick").unwrap(), "click");
-        assert_eq!(transformer.extract_event_name("onSubmit").unwrap(), "submit");
-        assert_eq!(transformer.extract_event_name("onKeyDown").unwrap(), "keydown");
-        
+        assert_eq!(
+            transformer.extract_event_name("onSubmit").unwrap(),
+            "submit"
+        );
+        assert_eq!(
+            transformer.extract_event_name("onKeyDown").unwrap(),
+            "keydown"
+        );
+
         assert!(transformer.extract_event_name("class").is_err());
         assert!(transformer.extract_event_name("on").is_err());
     }

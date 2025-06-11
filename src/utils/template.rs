@@ -1,11 +1,10 @@
-/// Template generation utilities for Solid.js
-/// 
+/// Template generation utilities for dom-expressions
+///
 /// This module handles the generation of template strings and
-/// template function calls for Solid.js JSX transformation
+/// template function calls for dom-expressions JSX transformation
+use oxc_ast::ast::{JSXChild, JSXElement};
 
-use oxc_ast::ast::{JSXElement, JSXChild};
-
-/// Template generator for converting JSX to Solid.js templates
+/// Template generator for converting JSX to dom-expressions templates
 pub struct TemplateGenerator {
     /// Counter for generating unique template names
     template_counter: usize,

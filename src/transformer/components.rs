@@ -1,13 +1,12 @@
-/// Component transformation logic for Solid.js
-/// 
-/// This module handles Solid.js specific components:
+/// Component transformation logic for dom-expressions
+///
+/// This module handles dom-expressions specific components:
 /// - <Show> conditionals
 /// - <For> loops  
 /// - <Switch>/<Match> conditionals
 /// - <Suspense> boundaries
 /// - Custom components
-
-use oxc_ast::ast::{JSXElement, JSXElementName, Expression};
+use oxc_ast::ast::{Expression, JSXElement, JSXElementName};
 
 pub struct ComponentTransformer;
 
@@ -16,8 +15,8 @@ impl ComponentTransformer {
         Self
     }
 
-    /// Check if a JSX element is a Solid.js control flow component
-    pub fn is_solid_component(name: &JSXElementName) -> bool {
+    /// Check if a JSX element is a dom-expressions control flow component
+    pub fn is_dom_expressions_component(name: &JSXElementName) -> bool {
         match name {
             JSXElementName::Identifier(ident) => {
                 matches!(
@@ -35,10 +34,13 @@ impl ComponentTransformer {
         }
     }
 
-    /// Transform Solid.js control flow components
-    pub fn transform_solid_component(&self, element: &JSXElement) -> Result<Expression, ComponentError> {
+    /// Transform dom-expressions control flow components
+    pub fn transform_dom_expressions_component(
+        &self,
+        element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         let component_name = self.get_component_name(element)?;
-        
+
         match component_name.as_str() {
             "Show" => self.transform_show_component(element),
             "For" => self.transform_for_component(element),
@@ -52,7 +54,10 @@ impl ComponentTransformer {
     }
 
     /// Transform <Show when={condition}>{children}</Show>
-    fn transform_show_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_show_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Show component
         // <Show when={condition} fallback={fallback}>{children}</Show>
         // -> (() => condition ? children : fallback)()
@@ -68,31 +73,46 @@ impl ComponentTransformer {
     }
 
     /// Transform <Switch>...</Switch>
-    fn transform_switch_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_switch_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Switch component
         Err(ComponentError::NotImplemented("Switch component"))
     }
 
     /// Transform <Match when={condition}>...</Match>
-    fn transform_match_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_match_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Match component
         Err(ComponentError::NotImplemented("Match component"))
     }
 
     /// Transform <Suspense fallback={fallback}>...</Suspense>
-    fn transform_suspense_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_suspense_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Suspense component
         Err(ComponentError::NotImplemented("Suspense component"))
     }
 
     /// Transform <Portal mount={target}>...</Portal>
-    fn transform_portal_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_portal_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Portal component
         Err(ComponentError::NotImplemented("Portal component"))
     }
 
     /// Transform <Dynamic component={comp} {...props} />
-    fn transform_dynamic_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    fn transform_dynamic_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform Dynamic component
         Err(ComponentError::NotImplemented("Dynamic component"))
     }
@@ -102,20 +122,23 @@ impl ComponentTransformer {
         match &element.opening_element.name {
             JSXElementName::Identifier(ident) => Ok(ident.name.to_string()),
             JSXElementName::IdentifierReference(ident) => Ok(ident.name.to_string()),
-            JSXElementName::NamespacedName(_) => {
-                Err(ComponentError::UnsupportedComponent("Namespaced components not supported".to_string()))
-            }
-            JSXElementName::MemberExpression(_) => {
-                Err(ComponentError::UnsupportedComponent("Member expression components not yet supported".to_string()))
-            }
-            JSXElementName::ThisExpression(_) => {
-                Err(ComponentError::UnsupportedComponent("This expression components not yet supported".to_string()))
-            }
+            JSXElementName::NamespacedName(_) => Err(ComponentError::UnsupportedComponent(
+                "Namespaced components not supported".to_string(),
+            )),
+            JSXElementName::MemberExpression(_) => Err(ComponentError::UnsupportedComponent(
+                "Member expression components not yet supported".to_string(),
+            )),
+            JSXElementName::ThisExpression(_) => Err(ComponentError::UnsupportedComponent(
+                "This expression components not yet supported".to_string(),
+            )),
         }
     }
 
     /// Transform custom (user-defined) components
-    pub fn transform_custom_component(&self, _element: &JSXElement) -> Result<Expression, ComponentError> {
+    pub fn transform_custom_component(
+        &self,
+        _element: &JSXElement,
+    ) -> Result<Expression, ComponentError> {
         // TODO: Transform custom components
         // <MyComponent prop={value}>{children}</MyComponent>
         // -> createComponent(MyComponent, { prop: value, children: ... })
@@ -149,7 +172,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solid_component_detection() {
+    fn test_dom_expressions_component_detection() {
         // TODO: Add tests for component detection
         // This would require creating mock JSXElementName instances
     }

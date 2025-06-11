@@ -1,20 +1,15 @@
+use oxc_ast::ast::{Program, Statement, Expression, JSXElement, JSXElementName, Argument};
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{
-    Argument, Expression, JSXElement, JSXElementName, Program, Statement, StringLiteral,
-    VariableDeclarationKind,
-};
-use oxc_ast::AstBuilder;
-use oxc_span::SPAN;
 
+pub mod jsx;
 pub mod components;
 pub mod events;
-pub mod jsx;
 pub mod optimization;
 
 // Re-export main types
-pub use components::{ComponentError, ComponentTransformer};
-pub use events::{EventError, EventTransformer};
 pub use jsx::{JSXTransformer, TransformError};
+pub use components::{ComponentTransformer, ComponentError};
+pub use events::{EventTransformer, EventError};
 pub use optimization::{OptimizationPass, OptimizationResult};
 
 #[derive(Debug, Clone)]
@@ -59,7 +54,6 @@ pub struct DomExpressionsTransform<'a> {
     options: &'a DomExpressionsTransformOptions,
     template_counter: usize,
     allocator: &'a Allocator,
-    ast_builder: AstBuilder<'a>,
 }
 
 impl<'a> DomExpressionsTransform<'a> {
@@ -74,25 +68,18 @@ impl<'a> DomExpressionsTransform<'a> {
     /// Main transformation entry point
     pub fn transform_program(&mut self, program: &mut Program) {
         let mut jsx_transformer = JSXTransformer::new(self.allocator);
-
+        
         // Collect all JSX elements and generate templates
         self.collect_jsx_templates(program, &mut jsx_transformer);
-
+        
         // Add template declarations at the beginning of the program
         self.add_template_declarations(program, &jsx_transformer);
-
-        println!(
-            "Transformation completed with {} templates",
-            jsx_transformer.get_templates().len()
-        );
+        
+        println!("Transformation completed with {} templates", jsx_transformer.get_templates().len());
     }
 
     /// Recursively find and process JSX elements to generate templates
-    fn collect_jsx_templates(
-        &mut self,
-        program: &mut Program,
-        jsx_transformer: &mut JSXTransformer,
-    ) {
+    fn collect_jsx_templates(&mut self, program: &mut Program, jsx_transformer: &mut JSXTransformer) {
         for stmt in &mut program.body {
             self.visit_statement(stmt, jsx_transformer);
         }
@@ -140,17 +127,13 @@ impl<'a> DomExpressionsTransform<'a> {
     fn add_template_declarations(&self, program: &mut Program, jsx_transformer: &JSXTransformer) {
         // For now, we'll print the template declarations
         // TODO: Add actual AST nodes to the program
-
+        
         for (template_name, template_html) in jsx_transformer.get_templates() {
-            let declaration =
-                jsx_transformer.create_template_declaration(template_name, template_html);
+            let declaration = jsx_transformer.create_template_declaration(template_name, template_html);
             println!("Template declaration: {}", declaration);
         }
-
-        println!(
-            "Added {} template declarations",
-            jsx_transformer.get_templates().len()
-        );
+        
+        println!("Added {} template declarations", jsx_transformer.get_templates().len());
     }
 
     /// Generate unique template name
@@ -184,10 +167,10 @@ mod tests {
         let allocator = Allocator::default();
         let options = DomExpressionsTransformOptions::default();
         let mut transform = DomExpressionsTransform::new(&options, &allocator);
-
+        
         let name1 = transform.get_next_template_name();
         assert_eq!(name1, "_tmpl$1");
-
+        
         let name2 = transform.get_next_template_name();
         assert_eq!(name2, "_tmpl$2");
     }

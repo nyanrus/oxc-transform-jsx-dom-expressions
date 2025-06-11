@@ -1,15 +1,15 @@
-# oxc-transform-solid
+# oxc-transform-jsx-dom-expressions
 
 :::warning
 this project is drafted and implementing with GitHub Copilot. this is kinda toy project, and there is no enough test.
 :::
-高性能な Rust ベースの Solid.js JSX トランスフォーマー
+高性能な Rust ベースの dom-expressions JSX トランスフォーマー
 
 ## 概要
 
-このプロジェクトは、[Solid.js](https://www.solidjs.com/) の JSX 変換を [OXC (Oxidation Compiler)](https://oxc.rs/) を使用して実装することで、従来の Babel ベースのトランスパイラーよりも大幅な性能向上を実現します。
+このプロジェクトは、[dom-expressions](https://github.com/ryansolid/dom-expressions) の JSX 変換を [OXC (Oxidation Compiler)](https://oxc.rs/) を使用して Rust で実装することで、従来の Babel ベースのトランスパイラーよりも大幅な性能向上を実現します。
 
-**重要**: このプロジェクトは Solid.js のライブラリ（Signal、Effect など）の再実装は行いません。JSX の変換のみに焦点を当てています。
+**重要**: このプロジェクトは dom-expressions のランタイムや Signal 実装は含みません。JSX の変換のみに焦点を当てています。
 
 ## 目標
 
@@ -25,14 +25,14 @@ this project is drafted and implementing with GitHub Copilot. this is kinda toy 
 - **JSX エレメント変換**: `<div>content</div>` → `_tmpl$('<div>content</div>')`
 - **コンポーネント変換**: カスタムコンポーネントの適切な関数呼び出しへの変換
 - **プロパティバインディング**: 動的プロパティとイベントハンドラーの最適化
-- **条件レンダリング**: `<Show>` や `<For>` などの制御フローコンポーネント
-- **フラグメント処理**: React Fragment スタイルの構文サポート
+- **条件レンダリング**: `<Show>` や `<For>` などの制御フローコンポーネント（dom-expressions流）
+- **フラグメント処理**: Fragment スタイルの構文サポート
 
 ### 最適化機能
 
 - **静的解析**: コンパイル時での不要な反応性ラッパーの除去
 - **テンプレート最適化**: 静的要素の事前コンパイル
-- **TreeShaking 支援**: 未使用の Solid.js ユーティリティの識別
+- **TreeShaking 支援**: 未使用の dom-expressions ユーティリティの識別
 
 ## アーキテクチャ
 
@@ -67,10 +67,10 @@ src/
 ## 使用方法
 
 ```rust
-use oxc_transform_solid::SolidTransform;
+use oxc_transform_jsx_dom_expressions::DomExpressionsTransform;
 
 // OXC トランスフォーマーとして使用
-let transformer = SolidTransform::new();
+let transformer = DomExpressionsTransform::new();
 // AST 変換実行
 ```
 
@@ -97,6 +97,6 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照してくださ�
 
 ## 関連プロジェクト
 
-- [Solid.js](https://github.com/solidjs/solid) - 元のライブラリ
+- [dom-expressions](https://github.com/ryansolid/dom-expressions) - 元のライブラリ
 - [OXC](https://oxc.rs/) - Rust ベースの JavaScript ツールチェーン
-- [babel-preset-solid](https://github.com/solidjs/solid/tree/main/packages/babel-preset-solid) - 元の Babel プラグイン
+- [babel-plugin-jsx-dom-expressions](https://github.com/ryansolid/dom-expressions/tree/main/packages/babel-plugin-jsx-dom-expressions) - 元の Babel プラグイン

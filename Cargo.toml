@@ -1,12 +1,12 @@
 [package]
-name = "oxc-transform-solid"
+name = "oxc-transform-jsx-dom-expressions"
 version = "0.1.0"
 edition = "2021"
-description = "High-performance Rust-based Solid.js JSX transformer using OXC"
+description = "High-performance Rust-based dom-expressions JSX transformer using OXC"
 license = "MIT"
-repository = "https://github.com/your-username/oxc-transform-solid"
-keywords = ["solid", "jsx", "transform", "oxc", "rust"]
-categories = ["development-tools", "web-programming"]
+repository = "https://github.com/your-username/oxc-transform-jsx-dom-expressions"
+keywords = ["dom-expressions", "jsx", "transform", "oxc", "rust"]
+categories = ["development-tools", "web-programming", "compilers"]
 
 [dependencies]
 oxc_allocator = "0.72.3"

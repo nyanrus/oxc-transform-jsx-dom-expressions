@@ -1,12 +1,11 @@
-/// Optimization passes for Solid.js transformations
-/// 
+/// Optimization passes for dom-expressions transformations
+///
 /// This module implements various optimization techniques:
 /// - Static analysis to eliminate unnecessary reactivity
 /// - Template deduplication
-/// - Dead code elimination for Solid.js utilities
+/// - Dead code elimination for dom-expressions utilities
 /// - Constant folding for JSX expressions
-
-use oxc_ast::ast::{Program, Expression, JSXElement};
+use oxc_ast::ast::{Expression, JSXElement, Program};
 
 pub struct OptimizationPass {
     /// Enable/disable specific optimizations
@@ -49,7 +48,7 @@ impl OptimizationPass {
         result
     }
 
-    /// Eliminate dead code specific to Solid.js
+    /// Eliminate dead code specific to dom-expressions
     fn eliminate_dead_code_pass(&self, _program: &mut Program) -> usize {
         // TODO: Implement dead code elimination
         // Remove:
@@ -77,10 +76,10 @@ impl OptimizationPass {
         0
     }
 
-    /// Remove unused Solid.js imports
+    /// Remove unused dom-expressions imports
     fn remove_unused_imports_pass(&self, _program: &mut Program) -> usize {
         // TODO: Implement unused import removal
-        // Analyze which Solid.js functions are actually used
+        // Analyze which dom-expressions functions are actually used
         // Remove unused imports to reduce bundle size
         0
     }

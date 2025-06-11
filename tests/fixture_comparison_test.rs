@@ -1,4 +1,4 @@
-use oxc_transform_solid::{SolidJsTransformer, SolidTransformOptions};
+use oxc_transform_jsx_dom_expressions::{DomExpressionsTransform, DomExpressionsTransformOptions};
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -6,39 +6,23 @@ use oxc_codegen::Codegen;
 use std::fs;
 use std::path::Path;
 
-fn parse_and_transform(code: &str, options: Option<SolidTransformOptions>) -> String {
-    let allocator = Allocator::default();
+fn parse_and_transform(code: &str, options: Option<DomExpressionsTransformOptions>) -> String {    let allocator = Allocator::default();
     let source_type = SourceType::default().with_typescript(false).with_jsx(true);
     
     let parser = Parser::new(&allocator, code, source_type);
     let mut program = parser.parse().program;
     
-    let mut transformer = match options {
-        Some(opts) => SolidJsTransformer::with_options(opts),
-        None => SolidJsTransformer::new(),
-    };
-    
-    // Get template declarations from the JSX transformation
-    let template_declarations = transformer.get_template_declarations_with_allocator(&mut program, &allocator);
+    // Use actual transformer
+    let transform_options = options.unwrap_or_default();
+    let mut transformer = DomExpressionsTransform::new(&transform_options, &allocator);
     
     // Transform the program
-    transformer.transform_program_with_allocator(&mut program, &allocator);
+    transformer.transform_program(&mut program);
     
     // Generate code from transformed AST
     let output = Codegen::new().build(&program).code;
     
-    // Prepend template declarations to the output
-    let mut result = String::new();
-    for declaration in &template_declarations {
-        result.push_str(declaration);
-        result.push('\n');
-    }
-    if !template_declarations.is_empty() {
-        result.push('\n');
-    }
-    result.push_str(&output);
-    
-    result
+    output
 }
 
 fn normalize_whitespace(s: &str) -> String {

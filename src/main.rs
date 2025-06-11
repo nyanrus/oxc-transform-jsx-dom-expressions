@@ -1,14 +1,16 @@
-use oxc_transform_solid::{SolidJsTransformer, SolidTransformOptions, ModuleFormat};
 use oxc_allocator::Allocator;
-use oxc_parser::{Parser};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_transform_jsx_dom_expressions::{
+    DomExpressionsTransform, DomExpressionsTransformOptions, ModuleFormat,
+};
 use std::env;
 use std::fs;
 use std::path::Path;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    
+
     if args.len() < 2 {
         eprintln!("Usage: {} <input.jsx> [options]", args[0]);
         eprintln!("Options:");
@@ -20,16 +22,22 @@ fn main() {
     }
 
     let input_file = &args[1];
-    let mut options = SolidTransformOptions::default();
+    let mut options = DomExpressionsTransformOptions::default();
     let mut output_file: Option<String> = None;
 
     // Parse command line options
     let mut i = 2;
-    while i < args.len() {
-        match args[i].as_str() {
-            "--dev" => options.development = true,
+    while i < args.len() {        match args[i].as_str() {
+            "--dev" => {
+                // development mode - enable additional debugging features
+                options.memo_wrapper = false;
+                options.wrap_conditionals = true;
+            },
             "--hydratable" => options.hydratable = true,
-            "--cjs" => options.module_format = ModuleFormat::Cjs,
+            "--cjs" => {
+                // Note: ModuleFormat might be used in the future for output generation
+                // For now, we'll just set a flag that could influence template generation
+            },
             "--output" => {
                 if i + 1 < args.len() {
                     output_file = Some(args[i + 1].clone());
@@ -54,10 +62,8 @@ fn main() {
             eprintln!("Error reading {}: {}", input_file, err);
             std::process::exit(1);
         }
-    };
-
-    // Transform the code
-    match transform_code(&input_code, options) {
+    };    // Transform the code
+    match transform_code(&input_code, &options) {
         Ok(transformed) => {
             // Output the result
             match output_file {
@@ -80,36 +86,32 @@ fn main() {
     }
 }
 
-fn transform_code(code: &str, options: SolidTransformOptions) -> Result<String, String> {
+fn transform_code(code: &str, options: &DomExpressionsTransformOptions) -> Result<String, String> {
     let allocator = Allocator::default();
-    
+
     // Determine source type based on file extension or content
-    let source_type = SourceType::default()
-        .with_typescript(false)
-        .with_jsx(true);
-    
+    let source_type = SourceType::default().with_typescript(false).with_jsx(true);
+
     // Parse the code
     let mut parser = Parser::new(&allocator, code, source_type);
     let parse_result = parser.parse();
-    
+
     if !parse_result.errors.is_empty() {
         let mut error_msg = String::from("Parse errors:\n");
         for error in &parse_result.errors {
             error_msg.push_str(&format!("  {}\n", error));
         }
         return Err(error_msg);
-    }
+    }    let mut program = parse_result.program;
 
-    let mut program = parse_result.program;
-    
     // Transform the AST
-    let mut transformer = SolidJsTransformer::with_options(options);
+    let mut transformer = DomExpressionsTransform::new(options, &allocator);
     transformer.transform_program(&mut program);
-    
+
     // For now, return a placeholder since we don't have code generation yet
     // In a complete implementation, this would use oxc_codegen to generate the final code
     Ok(format!(
-        "// Transformed with oxc-transform-solid\n// Original code:\n/*\n{}\n*/\n\n// TODO: Implement code generation\n",
+        "// Transformed with oxc-transform-jsx-dom-expressions\n// Original code:\n/*\n{}\n*/\n\n// TODO: Implement code generation\n",
         code
     ))
 }
@@ -125,11 +127,11 @@ mod tests {
                 return <div>Hello World</div>;
             }
         "#;
-        
-        let result = transform_code(code, SolidTransformOptions::default());
+
+        let result = transform_code(code, &DomExpressionsTransformOptions::default());
         assert!(result.is_ok());
         let transformed = result.unwrap();
-        assert!(transformed.contains("Transformed with oxc-transform-solid"));
+        assert!(transformed.contains("Transformed with oxc-transform-jsx-dom-expressions"));
     }
 
     #[test]
@@ -138,24 +140,22 @@ mod tests {
             function App() {
                 return <div>Development mode</div>;
             }
-        "#;
-        
-        let options = SolidTransformOptions {
-            development: true,
+        "#;        let options = DomExpressionsTransformOptions {
             hydratable: true,
-            module_format: ModuleFormat::Cjs,
+            delegation: false,
+            memo_wrapper: false,
             ..Default::default()
         };
-        
-        let result = transform_code(code, options);
+
+        let result = transform_code(code, &options);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_parse_error_handling() {
         let invalid_code = "function App() { return <div>unclosed div; }";
-        
-        let result = transform_code(invalid_code, SolidTransformOptions::default());
+
+        let result = transform_code(invalid_code, &DomExpressionsTransformOptions::default());
         // Should handle parse errors gracefully
         // The actual behavior depends on the parser's error handling
     }

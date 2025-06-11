@@ -12,29 +12,68 @@ pub struct AstUtils;
 
 impl AstUtils {
     /// Check if a JSX element has dynamic content
-    pub fn has_dynamic_content(_element: &JSXElement) -> bool {
-        // TODO: Implement dynamic content detection
-        // This will analyze JSX elements to determine if they contain
-        // dynamic expressions that need runtime evaluation
+    pub fn has_dynamic_content(element: &JSXElement) -> bool {
+        // 動的属性または動的子要素があればtrue
+        for attr in &element.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(jsx_attr) = attr {
+                if let Some(JSXAttributeValue::ExpressionContainer(_)) = &jsx_attr.value {
+                    return true;
+                }
+            } else if let JSXAttributeItem::SpreadAttribute(_) = attr {
+                return true;
+            }
+        }
+        for child in &element.children {
+            match child {
+                JSXChild::ExpressionContainer(_) => return true,
+                JSXChild::Element(e) => {
+                    if AstUtils::has_dynamic_content(e) {
+                        return true;
+                    }
+                }
+                _ => {}
+            }
+        }
         false
     }
 
     /// Count the number of dynamic expressions in a JSX element
-    pub fn count_dynamic_expressions(_element: &JSXElement) -> usize {
-        // TODO: Implement dynamic expression counting
-        0
+    pub fn count_dynamic_expressions(element: &JSXElement) -> usize {
+        let mut count = 0;
+        for attr in &element.opening_element.attributes {
+            if let JSXAttributeItem::Attribute(jsx_attr) = attr {
+                if let Some(JSXAttributeValue::ExpressionContainer(_)) = &jsx_attr.value {
+                    count += 1;
+                }
+            } else if let JSXAttributeItem::SpreadAttribute(_) = attr {
+                count += 1;
+            }
+        }
+        for child in &element.children {
+            match child {
+                JSXChild::ExpressionContainer(_) => count += 1,
+                JSXChild::Element(e) => count += AstUtils::count_dynamic_expressions(e),
+                _ => {}
+            }
+        }
+        count
     }
 
     /// Extract the tag name from a JSX element
-    pub fn get_element_name(_element: &JSXElement) -> Option<String> {
-        // TODO: Implement element name extraction
-        None
+    pub fn get_element_name(element: &JSXElement) -> Option<String> {
+        use oxc_ast::ast::JSXElementName;
+        match &element.opening_element.name {
+            JSXElementName::Identifier(ident) => Some(ident.name.to_string()),
+            JSXElementName::IdentifierReference(ident) => Some(ident.name.to_string()),
+            JSXElementName::NamespacedName(ns) => Some(format!("{}:{}", ns.namespace.name, ns.name.name)),
+            JSXElementName::MemberExpression(_) => None, // 複雑な場合は未対応
+            JSXElementName::ThisExpression(_) => None,
+        }
     }
 
     /// Check if a JSX element is self-closing
-    pub fn is_self_closing(_element: &JSXElement) -> bool {
-        // TODO: Implement self-closing detection
-        false
+    pub fn is_self_closing(element: &JSXElement) -> bool {
+        element.opening_element.self_closing
     }
 }
 
@@ -49,3 +88,5 @@ mod tests {
         assert!(true);
     }
 }
+
+// コメントやテスト名の "SolidTransform" などを "DomExpressionsTransform" にリネーム

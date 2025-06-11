@@ -47,3 +47,5 @@ mod tests {
         assert!(true);
     }
 }
+
+// コメントやテスト名の "SolidTransform" などを "DomExpressionsTransform" にリネーム

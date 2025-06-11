@@ -538,7 +538,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc-transform-solid"
+name = "oxc-transform-jsx-dom-expressions"
 version = "0.1.0"
 dependencies = [
  "criterion",
