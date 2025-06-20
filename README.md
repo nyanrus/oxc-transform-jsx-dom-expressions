@@ -1,10 +1,9 @@
 # oxc-transform-jsx-dom-expressions
 
-:::warning
-this project is drafted and implementing with GitHub Copilot.
-This is toy project, and there is no enough test.
-All content is AI-generated and plan may be wrong.
-:::
+> [!WARNING]
+> This project is drafted and implementing with GitHub Copilot.
+> This is toy project, and test has not passed.
+> All content is AI-generated and plan may be wrong.
 
 High-performance Rust-based dom-expressions JSX transformer
 
