@@ -1,0 +1,1 @@
+const template = <div class="container" id="main" data-test="value">Content</div>;

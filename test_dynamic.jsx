@@ -1,0 +1,1 @@
+const template = <div id={variable} class={computedClass} style={{color: 'red'}} disabled={isDisabled}>Content</div>;
